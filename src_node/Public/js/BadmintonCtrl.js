@@ -16,6 +16,7 @@ mainApp.controller('BadmintonCtrl', function ($scope, $http,$window) {
     }
     $scope.badmintonData.operations={
         display_mode:3
+        ,threshold:50
     }
     d3.csv('../data/processeddata.csv', function ( raw ) {
         // build the score matrix
@@ -156,8 +157,8 @@ mainApp.controller('BadmintonCtrl', function ($scope, $http,$window) {
                                 count_match: count_match,
                                 win_rate_game: count_game == 0 ? 0 : arrMatrix[l][i][j] / count_game,
                                 win_rate_match: count_match == 0 ? 0 : arrMatrix[l][i][j] / count_match,
-                                value: arrMatrix[l][i][j] == 0 ? 0 : arrMaxValue[l]
-                                //value: arrMatrix[l][i][j]/arrMaxValue[l]
+                                //value: arrMatrix[l][i][j] == 0 ? 0 : arrMaxValue[l]
+                                value: arrMatrix[l][i][j]/arrMaxValue[l]
                             }
                         )
                 }
