@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+    }
+
+    .axis text {
+        font-family: sans-serif;
+        font-size: 11px;
+    }
+</style>
+
+<div class="heatmap"></div>
+
+<script src="../lib/d3.v4.js"></script>
+
+<script>
+    var game=1,round=31;
+    var margin = {top: 30, right: 30, bottom: 30, left: 30}
+        width = 900 - margin.right - margin.left,
+        height = 900 - margin.top - margin.bottom,
+        padding=0;
+
+    var gameSize=(width-(game-1)*padding)/game
+        itemSize = gameSize/round,
+        cellSize = itemSize - 3;
+
+
+    var svgMain = d3.select('.heatmap')
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+
+    d3.csv('../data/bwf-ss-gamedata-2015-2017-new.csv', function ( raw ) {
+        //console.log(raw);
+        // build the score matrix
+
+        // empty matrix
+        var maxValue=0;
+        var matrix=[];
+        for(var i=0;i<32;i++){
+            var scores=[]
+            for(var j=0;j<32;j++){
+                scores.push(0);
+            }
+            matrix.push(scores);
+        }
+        // fill the matrix
+        var count=0;
+        raw.forEach(function(d){
+            // check if reverse
+            var scores=d.Scores.split(';');
+            var finalScore=scores[scores.length-1];
+            var finalScores=finalScore.split('-');
+            var reverse=0;
+            if(parseInt(finalScores[0])<parseInt(finalScores[1])) reverse=1;
+            scores.forEach(function(score){
+                var bothSide=score.split('-');
+                var currentValue;
+                if(reverse==1){
+                    currentValue=++matrix[bothSide[1]][bothSide[0]];
+                }
+                else{
+                    currentValue=++matrix[bothSide[0]][bothSide[1]];
+                }
+
+                if(currentValue>maxValue) maxValue=currentValue;
+            })
+            count++;
+        })
+        console.log(count);
+        var data=[];
+
+        for(var i=0;i<32;i++){
+            for(var j=0;j<32;j++){
+                data.push(
+                    {
+                        player1:i,
+                        player2:j,
+                        count:matrix[i][j]+matrix[j][i],
+                        win_rate:matrix[i][j]+matrix[j][i]==0?0:matrix[i][j]/(matrix[i][j]+matrix[j][i]),
+                        value:matrix[i][j]==0? 0:maxValue
+                        //value: matrix[i][j]/maxValue
+                    }
+                )
+            }
+        }
+        console.log(data)
+        // show
+        drawGame(data,0,0)
+
+        function drawGame(data,x,y){
+
+            var x_elements = d3.set(data.map(function( item ) { return item.player2; } )).values(),
+                y_elements = d3.set(data.map(function( item ) { return item.player1; } )).values();
+
+            var xScale = d3.scaleBand()
+                .domain(x_elements)
+                .range([0, gameSize]);
+
+            var xAxis = d3.axisBottom()
+                .scale(xScale)
+                .tickFormat(function (d) {
+                    return d;
+                })
+
+            var yScale = d3.scaleBand()
+                .domain(y_elements)
+                .range([gameSize,0]);
+
+            var yAxis = d3.axisLeft()
+                .scale(yScale)
+                .tickFormat(function (d) {
+                    return d;
+                })
+
+
+            var pos={
+                x: margin.left+x*(gameSize+padding),
+                y: margin.top+(game-1-y)*(gameSize+padding)
+            }
+
+            var svg=svgMain
+                .append("g")
+                .attr("transform", "translate(" + pos.x + "," + pos.y + ")");
+
+
+            var cells = svg.selectAll('rect')
+                .data(data)
+                .enter().append('g').append('rect')
+                .attr('class', 'cell')
+                .attr('width', cellSize)
+                .attr('height', cellSize)
+                .attr('y', function(d) { return yScale(d.player1); })
+                .attr('x', function(d) { return xScale(d.player2); })
+                /*
+                .attr('fill', function(d) { return 'red'; })
+                .attr('opacity',function(d){return d.value;})
+                 */
+                .attr('fill', function(d) {
+                        if(d.count==0) return 'gray'
+                        else if(d.win_rate>0.5) return 'blue'
+                        else return 'red'
+                    }
+                )
+                .attr('opacity',function(d){return Math.abs(d.win_rate-0.5);})
+                .on("mouseover", function(d) {
+                    console.log(d.player1+":"+d.player2+"; win rate: "+d.win_rate)
+                })
+
+            if(x==0)
+                svg.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis)
+                    .selectAll('text')
+                    .attr('font-weight', 'normal');
+
+            if(y==0)
+                svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(" + 0 + "," + gameSize + ")")
+                    .call(xAxis)
+                    .selectAll('text')
+                    .attr('font-weight', 'normal')
+
+        }
+
+    });
+</script>

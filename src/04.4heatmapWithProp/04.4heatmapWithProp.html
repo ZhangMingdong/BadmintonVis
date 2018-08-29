@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+    }
+
+    .axis text {
+        font-family: sans-serif;
+        font-size: 11px;
+    }
+
+    div.tooltip {
+        position: absolute;
+        text-align: center;
+        width: 60px;
+        height: 28px;
+        padding: 2px;
+        font: 12px sans-serif;
+        background: lightsteelblue;
+        border: 0px;
+        border-radius: 8px;
+        pointer-events: none;
+    }
+
+</style>
+
+<div class="heatmap"></div>
+
+<script src="../lib/d3.v4.js"></script>
+
+<script>
+    var game=2,round=31;
+    var margin = {top: 30, right: 30, bottom: 30, left: 30}
+        width = 900 - margin.right - margin.left,
+        height = 900 - margin.top - margin.bottom,
+        padding=40;
+
+    var gameSize=(width-(game-1)*padding)/game
+        itemSize = gameSize/round,
+        cellSize = itemSize - 1;
+
+
+    var svgMain = d3.select('.heatmap')
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+
+    d3.csv('../data/bwf-ss-gamedata-2015-2017-new.csv', function ( raw ) {
+        //console.log(raw);
+        // build the score matrix
+        /*
+            0: 0-0
+            1: 1-0
+            2: 0-1
+            3: 1-1
+        */
+        // empty matrix
+        var arrMaxValue=[0,0,0,0];
+        var arrMatrix=[[],[],[],[]];
+        for(var l=0;l<4;l++){
+            for(var i=0;i<32;i++){
+                var scores=[]
+                for(var j=0;j<32;j++){
+                    scores.push(0);
+                }
+                arrMatrix[l].push(scores);
+            }
+        }
+
+        // fill the matrix
+        var buf=[];// use to store the games of a single match
+        raw.forEach(function(d){
+            if(buf.length==0 ||
+                (buf[buf.length-1].Year==d.Year
+                    && buf[buf.length-1].Tournament==d.Tournament
+                    && buf[buf.length-1].Round==d.Round
+                    && buf[buf.length-1].Match==d.Match
+                    && buf[buf.length-1].Type==d.Type
+                )){
+                // record one match
+                buf.push(d);
+            }
+            else{
+                // handle the match
+                if(buf.length==2){
+                    // if there's two games, just parse them
+                    for(var l=0;l<2;l++){
+                        // check if reverse
+                        var scores=buf[l].Scores.split(';');
+                        var finalScore=scores[scores.length-1];
+                        var finalScores=finalScore.split('-');
+                        var reverse=0;
+                        if(parseInt(finalScores[0])<parseInt(finalScores[1])) reverse=1;
+                        scores.forEach(function(score){
+                            var bothSide=score.split('-');
+                            var currentValue;
+                            if(reverse==1){
+                                currentValue=++arrMatrix[l][bothSide[1]][bothSide[0]];
+                            }
+                            else{
+                                currentValue=++arrMatrix[l][bothSide[0]][bothSide[1]];
+                            }
+
+                            if(currentValue>arrMaxValue[l]) arrMaxValue[l]=currentValue;
+                        })
+                    }
+                }
+                else if(buf.length==3){
+                    // for three games
+                    var arrReverse=[0,0,0];
+                    for(var l=0;l<3;l++){
+                        // check if reverse
+                        var scores=buf[l].Scores.split(';');
+                        var finalScore=scores[scores.length-1];
+                        var finalScores=finalScore.split('-');
+                        if(parseInt(finalScores[0])<parseInt(finalScores[1])) arrReverse[l]=1;
+                    }
+
+                    for(var l=0;l<3;l++){
+                        scores.forEach(function(score){
+                            var bothSide=score.split('-');
+                            var currentValue;
+                            var currentGame=0;
+                            if(l==2){
+                                currentGame=3;
+                            }
+                            else if(l==1 && arrReverse[2]!=arrReverse[1]) currentGame=2;
+
+                            if(arrReverse[2]==1){
+                                currentValue=++arrMatrix[currentGame][bothSide[1]][bothSide[0]];
+                            }
+                            else{
+                                currentValue=++arrMatrix[currentGame][bothSide[0]][bothSide[1]];
+                            }
+
+                            if(currentValue>arrMaxValue[currentGame]) arrMaxValue[currentGame]=currentValue;
+                        })
+                    }
+
+                }
+                // just ignore the matches with 1 or more than three games
+
+                buf=[d];
+            }
+        })
+        //console.log(maxValue);
+        var arrData=[[],[],[],[]];
+        for(var l=0;l<4;l++){
+            for(var i=0;i<32;i++){
+                for(var j=0;j<32;j++){
+                    var count;
+                    var win_rate;
+                    if(l==0||l==3) count=arrMatrix[l][i][j]+arrMatrix[l][j][i];
+                    else count=arrMatrix[l][i][j]+arrMatrix[3-l][j][i];
+                    arrData[l].push(
+                        {
+                            player1:i,
+                            player2:j,
+                            count:count,
+                            win_rate:count==0?0:arrMatrix[l][i][j]/count,
+                            value:arrMatrix[l][i][j]==0? 0:arrMaxValue[l]
+                            //value: arrMatrix[l][i][j]/arrMaxValue[l]
+                        }
+                    )
+                }
+            }
+        }
+
+        // show
+        drawGame(arrData[0],0,0)
+        drawGame(arrData[1],0,1)
+        drawGame(arrData[2],1,0)
+        drawGame(arrData[3],1,1)
+
+        function drawGame(data,x,y){
+
+            var x_elements = d3.set(data.map(function( item ) { return item.player2; } )).values(),
+                y_elements = d3.set(data.map(function( item ) { return item.player1; } )).values();
+
+            var xScale = d3.scaleBand()
+                .domain(x_elements)
+                .range([0, gameSize]);
+
+            var xAxis = d3.axisBottom()
+                .scale(xScale)
+                .tickFormat(function (d) {
+                    return d;
+                })
+
+            var yScale = d3.scaleBand()
+                .domain(y_elements)
+                .range([gameSize,0]);
+
+            var yAxis = d3.axisLeft()
+                .scale(yScale)
+                .tickFormat(function (d) {
+                    return d;
+                })
+
+
+            var pos={
+                x: margin.left+x*(gameSize+padding),
+                y: margin.top+(game-1-y)*(gameSize+padding)
+            }
+
+            var svg=svgMain
+                .append("g")
+                .attr("transform", "translate(" + pos.x + "," + pos.y + ")");
+
+
+            var cells = svg.selectAll('rect')
+                .data(data)
+                .enter().append('g').append('rect')
+                .attr('class', 'cell')
+                .attr('width', cellSize)
+                .attr('height', cellSize)
+                .attr('y', function(d) { return yScale(d.player1); })
+                .attr('x', function(d) { return xScale(d.player2); })
+
+                /*
+                .attr('fill', function(d) { return 'red'; })
+                .attr('opacity',function(d){return d.value;})
+                 */
+                .attr('fill', function(d) {
+                        if(d.count==0) return 'gray'
+                        else if(d.win_rate>0.5) return 'blue'
+                        else return 'red'
+                    }
+                )
+                .attr('opacity',function(d){return Math.abs(d.win_rate-0.5);})
+                .on("mouseover", function(d) {
+                    console.log(d.player1+":"+d.player2+"; count: "+d.count+"; win rate: "+d.win_rate)
+                })
+
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis)
+                .selectAll('text')
+                .attr('font-weight', 'normal');
+
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(" + 0 + "," + gameSize + ")")
+                .call(xAxis)
+                .selectAll('text')
+                .attr('font-weight', 'normal')
+            //.style("text-anchor", "start")
+            //.attr("dx", ".8em")
+            //.attr("dy", ".5em")
+        }
+
+    });
+</script>

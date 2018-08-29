@@ -1,0 +1,68 @@
+<!--
+    last designed 2016/09/02
+    for analysis
+-->
+<html>
+<head>
+    <title>Fencing Vis</title>
+    <script src="lib/angular.min.js"></script>
+    <script src="lib/angular-route.min.js"></script>
+    <script src="lib/d3.v4.js" charset="utf-8"></script>
+    <script src="js/BadmintonCtrl.js"></script>
+    <script src="js/scoreMatrix.js"></script>
+    <link rel="stylesheet" type="text/css" href="CSS/score_matrix_style.css">
+</head>
+
+<body ng-app="myApp" ng-controller="BadmintonCtrl">
+
+<div style="float:left;width:79%;height:100%;overflow:auto;margin:2px;">
+    <div style="float:left;width:99%;height:48%;overflow:auto;margin:2px;">
+        <div style="float:left;width:30%;height:98%;overflow:auto;margin:2px;">
+            <score-matrix data="badmintonData.game10" operations="badmintonData.operations" style="height:100%;width:100%"></score-matrix>
+        </div>
+        <div style="float:left;width:30%;height:98%;overflow:auto;margin:2px;">
+            <score-matrix data="badmintonData.game11" operations="badmintonData.operations" style="height:100%;width:100%"></score-matrix>
+        </div>
+        <div style="float:left;width:30%;height:98%;overflow:auto;margin:2px;">
+            <score-matrix data="badmintonData.game101" operations="badmintonData.operations" style="height:100%;width:100%"></score-matrix>
+        </div>
+    </div>
+    <div style="float:left;width:99%;height:48%;overflow:auto;margin:2px;">
+        <div style="float:left;width:30%;height:98%;overflow:auto;margin:2px;">
+            <score-matrix data="badmintonData.game00" operations="badmintonData.operations" style="height:100%;width:100%"></score-matrix>
+        </div>
+        <div style="float:left;width:30%;height:98%;overflow:auto;margin:2px;">
+            <score-matrix data="badmintonData.game01" operations="badmintonData.operations" style="height:100%;width:100%"></score-matrix>
+        </div>
+        <div style="float:left;width:30%;height:98%;overflow:auto;margin:2px;">
+            <score-matrix data="badmintonData.game011" operations="badmintonData.operations" style="height:100%;width:100%"></score-matrix>
+        </div>
+    </div>
+</div>
+<div style="float:left;width:20%;height:100%;overflow:auto;margin:2px;">
+
+    <input type="radio"
+           id="mode1"
+           name="display_mode"
+           value="1" ng-model="badmintonData.operations.display_mode">
+    <label for="mode1">Match Winning Rate</label>
+    <br>
+
+    <input type="radio"
+           id="mode2"
+           name="display_mode"
+           value="2" ng-model="badmintonData.operations.display_mode">
+    <label for="mode2">Match Winning Rate</label>
+    <br>
+
+    <input type="radio"
+           id="mode3"
+           name="display_mode"
+           value="3" ng-model="badmintonData.operations.display_mode">
+    <label for="mode3">Count</label>
+</div>
+
+</body>
+</html>
+
+

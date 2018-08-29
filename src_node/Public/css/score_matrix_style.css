@@ -1,0 +1,114 @@
+
+
+score-matrix{
+    background-color: #afd9ee;
+}
+
+
+score-matrix {
+    width: 100%;
+    height: 800px;
+    display: block;
+    z-index: 0;
+    overflow: hidden;
+    font-size: 10px;
+}
+
+score-matrix .node, .node1, .node2 {
+    fill: white;
+    stroke: black;
+    stroke-width: 1;
+}
+
+score-matrix .node.simultaneous{
+    fill: gray;
+    opacity:.8;
+}
+
+score-matrix .node.selected {
+    stroke-width: 3;
+}
+
+score-matrix .node_left{
+    fill: red;
+    opacity: .5;
+}
+score-matrix .node_right{
+    fill: blue;
+    opacity: .5;
+}
+
+score-matrix text {
+    text-anchor: middle;
+    font: 20px sans-serif;
+}
+
+score-matrix .link {
+    fill: none;
+    stroke: gray;
+    stroke-opacity: .4;
+}
+
+score-matrix .link:hover {
+    stroke-opacity: .8;
+}
+
+score-matrix .linktube {
+    fill: none;
+    stroke: gray;
+    stroke-width: 30;
+    stroke-opacity: .05;
+}
+
+score-matrix .link0,.link1,.link2,.link3,.link4,.link5,.link6,.link7,.link8,.link9 {
+    fill: none;
+    stroke-opacity: .6;
+}
+
+score-matrix .link2 {
+    fill: none;
+    stroke: red;
+    stroke-opacity: .3;
+}
+
+score-matrix .linkfocused {
+    fill: none;
+    stroke: black;
+    stroke-opacity: .6;
+}
+
+score-matrix .linkselected {
+    fill: none;
+    stroke: black;
+    stroke-opacity: .6;
+}
+
+score-matrix .linkplayer1 {
+    fill: none;
+    stroke: red;
+    stroke-opacity: .3;
+}
+score-matrix .linkplayer2 {
+    fill: none;
+    stroke: blue;
+    stroke-opacity: .3;
+}
+
+score-matrix .node_pos, .node_step{
+    fill: red;
+    stroke:black;
+    strock-width:1;
+}
+
+score-matrix .axis path,
+score-matrix .axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+score-matrix .axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+}
+
